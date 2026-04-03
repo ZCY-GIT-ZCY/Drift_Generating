@@ -1,27 +1,5 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-dist/
-build/
-
-# Data
+runs/
 data/
-*.pt
-*.pth
-
-# Outputs
-outputs/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
-.env
-venv/
+wandb/
+__pycache__/
+*.pyc
