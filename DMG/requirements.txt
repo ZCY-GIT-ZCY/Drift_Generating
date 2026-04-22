@@ -63,4 +63,3 @@ matplotlib
 # bpy 会在 Blender 安装后自动可用
 
 # ========== 其他 ==========
-chumpy
