@@ -39,4 +39,4 @@ def get_module(cfg, datamodule):
     model_module = importlib.import_module(
         f".modeltype.{cfg.model.model_type}", package="dmg.models")
     Model = getattr(model_module, modeltype.upper())
-    return Model(cfg=cfg, datamodule=datamodule)
+    return Model(cfg, datamodule)

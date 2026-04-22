@@ -42,7 +42,7 @@ class DMG(pl.LightningModule):
     从而精确控制 PyTorch 梯度和 JAX drift_loss 梯度的合并时机。
     """
 
-    def __init__(self, cfg, datamodule=None):
+    def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
 
@@ -321,17 +321,18 @@ class DMG(pl.LightningModule):
                     all_grad_gen.append(grad_gen_np)
 
                 # batch 内均值
-                drift_loss = torch.tensor(np.mean(all_drift_losses), device=his.device, requires_grad=True)
+                drift_loss = torch.tensor(np.mean(all_drift_losses), device=his.device)
                 info = all_info[0] if all_info else {}
 
                 # grad_JAX: [B, 256] 均值
                 grad_gen_np_mean = np.mean(all_grad_gen, axis=0)  # [B, 256]
 
                 # 梯度注入：JAX drift_loss 的梯度注入到 feat_gen，
-                # 通过 manual_backward 让梯度回传到 generator 参数
+                # feat_gen.backward(grad) 回传到 generator 参数
+                # Note: 不使用 manual_backward(drift_loss)，因为 drift_loss 是新创建的
+                # 标量，与 feat_gen 的计算图无连接。真正的梯度由 _inject_jax_grad 提供。
                 self._inject_jax_grad(feat_gen, grad_gen_np_mean)
-                self.manual_backward(self.lambda_drift * drift_loss)
-                loss_total = self.lambda_drift * drift_loss
+                loss_total = self.lambda_drift * torch.tensor(np.mean(all_drift_losses), device=his.device, requires_grad=True)
                 drift_loss_defined = True
 
             except Exception as e:

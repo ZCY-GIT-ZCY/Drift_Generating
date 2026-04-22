@@ -1,42 +1,66 @@
-# DMG Requirements
+# DMG: Drifting Motion Generation
+# Python >= 3.9
 
-# PyTorch
+# ========== PyTorch ==========
 torch>=1.12.1
 torchvision
 
-# PyTorch Lightning
+# ========== PyTorch Lightning ==========
 pytorch_lightning>=1.7.0
-pytorch-lightning
-rich
+torchmetrics>=0.7.0
 
-# 数据处理
+# ========== 数据处理 ==========
 numpy>=1.19.0
 scipy
 omegaconf
-hydra-core
 pyyaml
 tqdm
 pillow
+pandas
+shortuuid
+psutil
+h5py
+joblib==1.2.0
+yacs
+einops
+scikit-learn
+scikit-image
 
-# 文本处理
+# ========== 文本处理 / CLIP ==========
 transformers
 ftfy
 spacy
 open_clip_torch
-ftfy
 regex
 
-# JAX / Flax (用于 Drift Loss)
+# ========== JAX / Flax (用于 Drift Loss) ==========
+# 注意：JAX 需要针对你的 GPU/CPU 平台安装正确的版本
+# 自动安装（推荐）：
+#   pip install jax jaxlib
+# NVIDIA GPU (CUDA 11.8):
+#   pip install jax[cuda11_cudnn8] -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+# CPU only:
+#   pip install jaxlib
 jax>=0.4.0
 jaxlib>=0.4.0
 flax>=0.7.0
 
-# 评估指标
-einops
+# ========== SMPL 可视化（可选） ==========
+# smplx 用于 SMPL 模型支持
+# smplx==0.1.28
+# trimesh==3.9.24
 
-# 日志
+# ========== 日志 ==========
 tensorboard
 wandb
+rich
 
-# 辅助
-scikit-learn
+# ========== 可视化（可选） ==========
+# matplotlib 用于 3D 动画预览
+matplotlib
+
+# Blender 用于高质量渲染（可选，需要单独安装 Blender）
+# bpy 会在 Blender 安装后自动可用
+
+# ========== 其他 ==========
+chumpy

@@ -321,18 +321,18 @@ R_list: [0.1, 0.5, 1.0]
 ### 阶段 0：环境准备与数据验证
 
 **0.1 环境与依赖**
-- 安装/验证 HumanML3D 数据集下载与预处理脚本（MLD `datasets/` 目录）
+- 安装/验证 HumanML3D 数据集下载与预处理脚本（DMG `datasets/` 目录）
 - 确认 PyTorch + PyTorch Lightning + Flax/JAX 双框架共存（Drift Loss 用 JAX，模型训练用 PyTorch）
-- 验证 MLD 数据加载流程端到端可运行（`train.py` 在 HumanML3D 上可启动训练）
+- 验证 DMG 数据加载流程端到端可运行（`train.py` 在 HumanML3D 上可启动训练）
 
 **0.2 数据加载验证**
-- 复用 MLD `mld/data/humanml/dataset.py` 的 `Text2MotionDatasetV2`，确认可正常读取 motion + text
+- 复用 MLD 数据处理逻辑，确认可正常读取 motion + text
 - 确认 RIFKE 263-dim 特征提取、归一化（mean/std）流程
 - 确认 `lengths_to_mask`、`remove_padding`、`collate_tensors` 工具函数可用
 
 **0.3 评估管线验证**
-- 复用 MLD `test.py` + `mld/models/metrics/` 评估脚本，确认 FID、R-Precision、MM Dist、Diversity 可正常计算
-- 在 HumanML3D 测试集上跑一遍 MLD 基线（已有预训练权重），记录基线指标
+- 复用 MLD 评估脚本，确认 FID、R-Precision、MM Dist、Diversity 可正常计算
+- 在 HumanML3D 测试集上跑一遍基线，记录基线指标
 
 > **阶段 0 交付物**：可运行的数据加载 + 评估管线，基线指标记录。
 
@@ -550,12 +550,13 @@ for batch in dataloader:
 
 | 组件 | 来源 | 位置 |
 |------|------|------|
-| HumanML3D 加载 / RIFKE 特征 / 归一化 | MLD | `mld/data/humanml/dataset.py` |
-| `lengths_to_mask`, `remove_padding`, `collate_tensors` | MLD | `mld/utils/temos_utils.py`, `mld/data/utils.py` |
-| MLD VAE Encoder / Decoder | MLD | `mld/models/architectures/mld_vae.py` |
-| CLIP 文本编码器 | MLD | `mld/models/architectures/mld_clip.py` |
-| 评估指标 (FID, R-Precision, MM Dist) | MLD | `mld/test.py`, `mld/models/modeltype/` |
-| `feats2joints` 可视化 | MLD | `mld/transforms/feats2smpl.py` |
+| HumanML3D 数据集 | - | `DMG/datasets/humanml3d/` |
+| HumanML3D 加载 / RIFKE 特征 / 归一化 | MLD | `dmg/data/humanml/` |
+| `lengths_to_mask`, `remove_padding`, `collate_tensors` | MLD | `dmg/utils/temos_utils.py`, `dmg/data/utils.py` |
+| MLD VAE Encoder / Decoder | MLD | `dmg/models/architectures/mld_vae.py` |
+| CLIP 文本编码器 | MLD | `dmg/models/architectures/mld_clip.py` |
+| 评估指标 (FID, R-Precision, MM Dist) | MLD | `dmg/test.py`, `dmg/models/modeltype/` |
+| `feats2joints` 可视化 | MLD | `dmg/transforms/feats2joints.py` |
 | `drift_loss`, `cdist` | Drifting | `Drifting_Model/drift_loss.py` |
 | `LightningDiTBlock`, `AdaLN`, `TimestepEmbedder` | Drifting | `Drifting_Model/models/generator.py` |
 | 1D RoPE 改造 | 本项目 | 见本文 四.1 节 |

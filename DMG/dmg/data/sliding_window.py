@@ -399,8 +399,9 @@ class SlidingWindowDataModule(pl.LightningDataModule):
             )
 
     def train_dataloader(self):
-        self._dataset = None  # 重置，确保 setup 重新构建训练集
-        self.setup()
+        # Only create dataset once (on first call), then reuse it
+        if self._dataset is None:
+            self.setup()
         return DataLoader(
             self._dataset,
             batch_size=self.batch_size,

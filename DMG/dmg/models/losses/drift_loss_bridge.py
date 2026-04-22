@@ -17,11 +17,20 @@
 
 import numpy as np
 import torch
+import os
+import sys
+from pathlib import Path
+
+# Add project root to path (DMG/.. = Motion_Generating/)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from jax import grad, jit
 import jax.numpy as jnp
 from torch import Tensor
 
-from ....Drifting_Model import drift_loss as jax_drift_loss
+from Drifting_Model import drift_loss as jax_drift_loss
 
 
 # =============================================================================

@@ -29,8 +29,8 @@ bank:
     hard_neg: true     # 是否启用 Hard Negative Mining
 
   # 输出路径
-  output_dir: "./outputs/bank"
-  bank_filename: "MotionDriftBank.pkl"
+  output_dir: "./data"
+  bank_filename: "motion_drift_bank.pkl"
 
 # ---------- 数据集参数 ----------
 dataset:

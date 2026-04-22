@@ -373,8 +373,8 @@ def main():
         console.print(f"  {len(results)} samples saved to {output_dir}")
 
         # ---- 阶段6：批量生成可视化文件 ----
-        # results 中保存的是原始尺度数据
-        # feats_to_visualization 期望归一化数据，需要先归一化回来
+        # results 中保存的是归一化数据
+        # feats_to_visualization 期望归一化数据，直接传入即可
         if HAS_VISUALIZATION:
             console.print(f"\n[cyan]Generating visualization files...[/cyan]")
             for idx, r in enumerate(results):
@@ -422,19 +422,17 @@ def main():
             lengths_his, lengths_future,
         )
 
-        # 反归一化
-        future_denorm = future_np * std_np + mean_np
-
         # 保存
+        # 为与批量模式保持一致，保存归一化数据
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = Path(args.motion).stem
 
         gen_path = output_dir / f"{base_name}_gen_{timestamp}.npy"
-        np.save(gen_path, future_denorm)
+        np.save(gen_path, future_np)  # 归一化数据
 
         # 拼接完整序列（his + gen）
-        his_denorm = his_tensor[0].cpu().numpy() * std_np + mean_np
-        full_seq = np.concatenate([his_denorm, future_denorm], axis=0)
+        his_norm = his_tensor[0].cpu().numpy()  # 已归一化
+        full_seq = np.concatenate([his_norm, future_np], axis=0)
         full_path = output_dir / f"{base_name}_full_{timestamp}.npy"
         np.save(full_path, full_seq)
 

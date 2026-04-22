@@ -158,32 +158,61 @@ def build_dataset(cfg: dict, split_file: str, mean: np.ndarray, std: np.ndarray)
 
 def get_dataset_metadata(cfg: dict, split: str):
     """
-    从 DMG 配置获取数据集路径和归一化参数
+    从 Bank 配置获取数据集路径和归一化参数
 
     Returns:
         (data_root, motion_dir, text_dir, split_file, mean, std)
     """
     from dmg.data.get_data import get_global_mean_std
+    from omegaconf import OmegaConf
 
-    dm_cfg = parse_args(phase="train")
+    # 获取脚本所在目录，确保路径解析正确
+    script_dir = Path(__file__).parent.resolve()
+    assets_path = script_dir / "configs" / "assets.yaml"
 
-    # 获取数据集配置
-    dataset_name = cfg['dataset'].get('name', 'humanml3d')
+    # 尝试从传入的 cfg 中获取数据集配置
+    dataset_name = cfg.get('dataset', {}).get('name', 'humanml3d')
     dataset_key = dataset_name.upper()
-    if not hasattr(dm_cfg.DATASET, dataset_key):
-        raise KeyError(f"DATASET.{dataset_key} not found in config")
 
-    dataset_cfg = getattr(dm_cfg.DATASET, dataset_key)
-    data_root = dataset_cfg.ROOT
+    # 从 assets.yaml 获取默认数据集路径
+    if assets_path.exists():
+        assets_cfg = OmegaConf.load(str(assets_path))
+        if hasattr(assets_cfg.DATASET, dataset_key):
+            dataset_cfg = getattr(assets_cfg.DATASET, dataset_key)
+            # 相对路径需要相对于脚本目录解析
+            root_path = dataset_cfg.ROOT
+            split_root_path = dataset_cfg.SPLIT_ROOT
+            
+            # 标准化相对路径
+            if Path(root_path).is_absolute():
+                data_root = str(Path(root_path).resolve())
+            else:
+                data_root = str((script_dir / root_path).resolve())
+            
+            if Path(split_root_path).is_absolute():
+                split_root = str(Path(split_root_path).resolve())
+            else:
+                split_root = str((script_dir / split_root_path).resolve())
+        else:
+            raise KeyError(f"DATASET.{dataset_key} not found in assets.yaml")
+    else:
+        raise FileNotFoundError(f"assets.yaml not found at {assets_path}")
 
-    # 获取全局均值和标准差（用于 Bank 构建的归一化）
-    # 与 MLD Text2MotionDatasetV2 保持一致，使用 HumanML3D 预计算的全局统计量
-    mean, std = get_global_mean_std(dataset_name, dm_cfg)
+    # 创建临时配置对象给 get_global_mean_std 使用
+    # 该函数需要 cfg.DATASET.{DATASET_KEY}.ROOT 属性
+    temp_cfg = OmegaConf.create({
+        'DATASET': {
+            dataset_key: {
+                'ROOT': data_root
+            }
+        }
+    })
+    mean, std = get_global_mean_std(dataset_name, temp_cfg)
 
     # 构建路径
-    motion_dir = pjoin(data_root, "new_joint_vecs")
-    text_dir = pjoin(data_root, "texts")
-    split_file = pjoin(dataset_cfg.SPLIT_ROOT, f"{split}.txt")
+    motion_dir = str(Path(data_root) / "new_joint_vecs")
+    text_dir = str(Path(data_root) / "texts")
+    split_file = str(Path(split_root) / f"{split}.txt")
 
     return data_root, motion_dir, text_dir, split_file, mean, std
 

@@ -11,6 +11,19 @@ TEST:
 
 ####################################
 # 数据集路径
+# 注意：相对于 DMG 目录（DMG/）
+# 完整结构：
+#   Motion_Generating/
+#   └── DMG/
+#       └── datasets/
+#           └── humanml3d/
+#               ├── Mean.npy
+#               ├── Std.npy
+#               ├── train.txt
+#               ├── val.txt
+#               ├── test.txt
+#               ├── new_joint_vecs/
+#               └── texts/
 ####################################
 DATASET:
   SMPL_PATH: './deps/smpl'
@@ -38,6 +51,13 @@ model:
   t2m_path: './deps/t2m/'
   # MLD 预训练 VAE
   mld_vae_path: './pretrained_models/mld_vae_humanml3d.ckpt'
+
+####################################
+# Bank 数据路径
+####################################
+BANK:
+  DATA_DIR: './data'
+  BANK_PATH: './data/motion_drift_bank.pkl'
 
 ####################################
 # 渲染设置
