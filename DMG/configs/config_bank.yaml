@@ -1,0 +1,57 @@
+# ============================================================
+# Stage 2: Bank 构建配置
+# ============================================================
+
+# ---------- 滑动窗口采样参数 ----------
+bank:
+  # 滑动窗口配置
+  his_len: 20          # 历史帧长度（pipeline §2.2 初版固定配置）
+  future_len: 25       # 未来帧长度
+  stride: 5            # 滑动步长
+  max_total_len: 45     # his_len + future_len，用于 padding
+
+  # VAE 编码批次大小（pipeline §7.3）
+  batch_size: 64
+
+  # 序列长度过滤（小于 his_len + future_len 的序列会被跳过）
+  min_motion_length: 45  # 最小序列长度
+  max_motion_length: 300  # 最大序列长度
+
+  # 每个聚类最大样本数（pipeline §6.2）
+  max_size_per_class: 64
+
+  # 聚类数量（pipeline §12.1，默认 512）
+  num_text_classes: 512
+
+  # 核函数参数（pipeline §7.3）
+  kernel:
+    sigma: 0.1         # 高斯核宽度
+    hard_neg: true     # 是否启用 Hard Negative Mining
+
+  # 输出路径
+  output_dir: "./outputs/bank"
+  bank_filename: "MotionDriftBank.pkl"
+
+# ---------- 数据集参数 ----------
+dataset:
+  name: "humanml3d"
+  split: "train"        # 使用训练集切片构建 Bank
+
+# ---------- CLIP 编码器参数 ----------
+clip:
+  model_path: "./deps/clip-vit-large-patch14"
+  batch_size: 256       # CLIP 编码批次大小
+  device: "cuda"        # cuda / cpu
+
+# ---------- VAE 编码器参数 ----------
+vae:
+  latent_dim: [1, 256]  # [token数, 通道数]，与 pipeline §3.1 一致
+  pretrained_path: ""   # 预训练权重路径（可选，用于加载 MLD 预训练 VAE）
+
+# ---------- 处理控制 ----------
+process:
+  num_workers: 8        # 数据加载线程数
+  prefetch_factor: 2    # DataLoader prefetch factor
+  progress_bar: true     # 是否显示进度条
+  tiny: false           # 调试模式，只处理少量样本
+  debug_samples: 100    # 调试模式样本数

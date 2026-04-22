@@ -1,0 +1,47 @@
+####################################
+# DMG: 资源路径配置文件
+####################################
+
+# 实验文件保存路径
+FOLDER: './experiments'
+
+# 测试文件保存路径
+TEST:
+  FOLDER: './results'
+
+####################################
+# 数据集路径
+####################################
+DATASET:
+  SMPL_PATH: './deps/smpl'
+  TRANSFORM_PATH: './deps/transforms/'
+  WORD_VERTILIZER_PATH: './deps/glove/'
+  KIT:
+    ROOT: './datasets/kit-ml'
+    SPLIT_ROOT: './datasets/kit-ml'
+  HUMANML3D:
+    ROOT: './datasets/humanml3d'
+    SPLIT_ROOT: './datasets/humanml3d'
+  HUMANACT12:
+    ROOT: './datasets/HumanAct12Poses'
+    SPLIT_ROOT: './datasets/HumanAct12Poses'
+
+####################################
+# 预训练模型路径
+####################################
+model:
+  # CLIP 文本编码器
+  clip_path: './deps/clip-vit-large-patch14'
+  # BERT 文本编码器
+  bert_path: './deps/distilbert-base-uncased'
+  # T2M 评估器
+  t2m_path: './deps/t2m/'
+  # MLD 预训练 VAE
+  mld_vae_path: './pretrained_models/mld_vae_humanml3d.ckpt'
+
+####################################
+# 渲染设置
+####################################
+RENDER:
+  BLENDER_PATH: '/usr/local/blender'
+  FOLDER: './animations'

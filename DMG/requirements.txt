@@ -1,0 +1,42 @@
+# DMG Requirements
+
+# PyTorch
+torch>=1.12.1
+torchvision
+
+# PyTorch Lightning
+pytorch_lightning>=1.7.0
+pytorch-lightning
+rich
+
+# 数据处理
+numpy>=1.19.0
+scipy
+omegaconf
+hydra-core
+pyyaml
+tqdm
+pillow
+
+# 文本处理
+transformers
+ftfy
+spacy
+open_clip_torch
+ftfy
+regex
+
+# JAX / Flax (用于 Drift Loss)
+jax>=0.4.0
+jaxlib>=0.4.0
+flax>=0.7.0
+
+# 评估指标
+einops
+
+# 日志
+tensorboard
+wandb
+
+# 辅助
+scikit-learn

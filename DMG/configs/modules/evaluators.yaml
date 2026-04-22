@@ -1,0 +1,13 @@
+# 评估器配置（复用）
+evaluators:
+  target: dmg.models.architectures.t2m_evaluators.T2MEvaluators
+  params:
+    t2m_path: ./deps/t2m/
+    dim_word: 300
+    dim_pos_ohot: 15
+    dim_text_hidden: 512
+    dim_coemb_hidden: 512
+    dim_move_hidden: 512
+    dim_move_latent: 512
+    dim_motion_hidden: 1024
+    dim_motion_latent: 512

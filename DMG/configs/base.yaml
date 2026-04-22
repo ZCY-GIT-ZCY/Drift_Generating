@@ -1,0 +1,165 @@
+####################################
+# DMG: Drifting Motion Generation
+# 基础配置文件
+####################################
+
+# 实验名称
+NAME: dmg_humanml3d_exp001
+# 调试模式
+DEBUG: True
+# 加速器类型: 'cpu', 'gpu'
+ACCELERATOR: 'gpu'
+# GPU 索引, 如 [0] 或 [0,1,2,3]
+DEVICE: [0]
+# 随机种子
+SEED_VALUE: 1234
+
+#####################################
+# 训练设置
+#####################################
+TRAIN:
+  SPLIT: 'train'
+  DATASETS: ['humanml3d']
+  NUM_WORKERS: 8
+  BATCH_SIZE: 64
+  END_EPOCH: 2000
+  START_EPOCH: 0
+  RESUME: ''                    # 从此路径恢复训练
+  PRETRAINED_VAE: ''           # VAE 模型路径
+  PRETRAINED: ''               # 预训练模型路径
+  EMA: True                    # 启用 EMA
+  EMA_DECAY: 0.999             # EMA 衰减率
+  GRAD_CLIP: 1.0               # 梯度裁剪阈值（0=禁用）
+  OPTIM:
+    TYPE: AdamW
+    LR: 2e-4
+    WEIGHT_DECAY: 0.01
+    SCHEDULER:
+      enabled: True            # 启用余弦退火学习率调度
+
+#####################################
+# 验证设置
+#####################################
+EVAL:
+  DATASETS: ['humanml3d']
+  BATCH_SIZE: 32
+  SPLIT: 'test'
+  encoder: 'vae'          # 'vae': VAE encoder freeze; 't2m': T2M MotionEncoder
+
+#####################################
+# 测试设置
+#####################################
+TEST:
+  CHECKPOINTS: ''               # 预训练模型路径
+  DATASETS: ['humanml3d']
+  SPLIT: 'test'
+  BATCH_SIZE: 1
+  NUM_WORKERS: 8
+  FOLDER: './results'
+  SAVE_PREDICTIONS: False
+  REPLICATION_TIMES: 20
+  MM_NUM_SAMPLES: 100
+  DIVERSITY_TIMES: 300
+  CFG_SCALE: 2.0              # 推理时的 CFG 尺度
+
+#####################################
+# 数据集设置
+#####################################
+DATASET:
+  JOINT_TYPE: 'humanml3d'
+  NFEATS: 263                 # HumanML3D RIFKE 特征维度
+  NJOINTS: 22
+  SAMPLER:
+    MAX_LEN: 196
+    MIN_LEN: 40
+    MAX_TEXT_LEN: 20
+  HUMANML3D:
+    PICK_ONE_TEXT: true
+    FRAME_RATE: 20.0
+    UNIT_LEN: 4                # 采样单位长度
+
+#####################################
+# 模型设置
+#####################################
+model:
+  target: 'modules'
+  model_type: dmg
+  condition: 'text'
+  latent_dim: [1, 256]        # MLD VAE latent 维度
+  ff_size: 1024
+  num_layers: 9
+  num_heads: 4
+  dropout: 0.1
+  activation: 'gelu'
+  # DMG 特有的生成器配置（待阶段3实现）
+  generator:
+    hidden_size: 768
+    depth: 12
+    num_heads: 12
+    use_qknorm: True
+    use_rmsnorm: True
+    use_rope: True
+    use_swiglu: True
+
+#####################################
+# Drift Loss 设置（阶段4完整实现）
+#####################################
+DRIFT_LOSS:
+  R_list: [0.1, 0.5, 1.0]     # 动作领域需更大 R（vs 图像 [0.02, 0.05, 0.2]）
+  pos_per_sample: 16
+  neg_per_sample: 32
+  kernel_sigma: 0.1
+  hard_neg: True
+
+#####################################
+# MotionDriftBank 设置
+#####################################
+BANK:
+  num_text_classes: 512        # CLIP+K-means 聚类数
+  max_size_per_class: 64      # 每类最大样本数
+  bank_path: ''               # 预构建的 Bank 文件路径（.pkl），留空则从数据集实时构建（训练时必须提供）
+
+#####################################
+# 滑动窗口设置（待阶段2实现）
+#####################################
+WINDOW:
+  his_len: 20                  # 历史帧长度
+  future_len: 25              # 未来帧长度
+  stride: 5                   # 重叠采样步长
+
+#####################################
+# CFG 设置
+#####################################
+CFG:
+  cfg_min: 1.0
+  cfg_max: 2.0
+  no_cfg_frac: 0.1
+
+#####################################
+# 指标设置
+#####################################
+METRIC:
+  TYPE: ['TemosMetric', 'TM2TMetrics']
+  FORCE_IN_METER: True
+
+#####################################
+# 损失函数设置
+#####################################
+LOSS:
+  TYPE: dmg
+  LAMBDA_DRIFT: 1.0
+  LAMBDA_MSE: 0.0              # 初期只用 drift_loss
+
+#####################################
+# 日志设置
+#####################################
+LOGGER:
+  SACE_CHECKPOINT_EPOCH: 200
+  LOG_EVERY_STEPS: 1
+  VAL_EVERY_STEPS: 200
+  TENSORBOARD: True
+  WANDB:
+    PROJECT: null
+    OFFLINE: False
+    RESUME_ID: null
+  FOLDER_EXP: './experiments'

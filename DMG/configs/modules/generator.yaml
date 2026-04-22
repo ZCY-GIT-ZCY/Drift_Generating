@@ -1,0 +1,13 @@
+# DMG 生成器配置（1D DiT，待阶段3实现）
+generator:
+  target: dmg.models.architectures.dit_gen_motion.DitGenMotion
+  params:
+    latent_dim: [1, 256]
+    hidden_size: 768
+    depth: 12
+    num_heads: 12
+    cond_dim: 768
+    use_qknorm: True
+    use_rmsnorm: True
+    use_rope: True
+    use_swiglu: True

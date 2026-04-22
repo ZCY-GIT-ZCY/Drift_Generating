@@ -1,0 +1,6 @@
+# CLIP 文本编码器配置（复用）
+text_encoder:
+  target: dmg.models.architectures.mld_clip.MldTextEncoder
+  params:
+    modelpath: ./deps/clip-vit-large-patch14
+    precision: 32
