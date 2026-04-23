@@ -1,16 +1,16 @@
-@echo off
-REM DMG: Download T2M Evaluators
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo Downloading T2M evaluators...
+# DMG: Prepare T2M evaluator directory (Linux/macOS)
 
-REM 创建目录
-if not exist ..\deps\t2m mkdir ..\deps\t2m
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DMG_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-echo.
-echo Please manually download T2M evaluators from:
-echo https://github.com/EricGuo5513/HumanML3D/tree/main/evaluators
-echo Or from MLD repository:
-echo https://github.com/ChenFengYe/motion-latent-diffusion/tree/main/deps/t2m
-echo.
+mkdir -p "${DMG_ROOT}/deps/t2m"
 
-pause
+echo "Prepared: ${DMG_ROOT}/deps/t2m"
+echo "Please place evaluator files in this directory."
+echo "Download URL:"
+echo "- https://drive.google.com/file/d/1AYsmEG8I3fAAoraT4vau0GnesWBWyeT8/view"
+echo "Direct URL (for gdown/wget tools that support it):"
+echo "- https://drive.google.com/uc?id=1AYsmEG8I3fAAoraT4vau0GnesWBWyeT8"

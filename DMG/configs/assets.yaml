@@ -28,7 +28,7 @@ TEST:
 DATASET:
   SMPL_PATH: './deps/smpl'
   TRANSFORM_PATH: './deps/transforms/'
-  WORD_VERTILIZER_PATH: './deps/glove/'
+  WORD_VERTILIZER_PATH: './deps/t2m/glove/'
   KIT:
     ROOT: './datasets/kit-ml'
     SPLIT_ROOT: './datasets/kit-ml'

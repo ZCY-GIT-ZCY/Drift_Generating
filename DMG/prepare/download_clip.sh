@@ -1,15 +1,12 @@
-@echo off
-REM DMG: Download CLIP Model
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo Downloading CLIP model...
+# DMG: Prepare CLIP model directory (Linux/macOS)
 
-REM 创建目录
-if not exist ..\deps\clip-vit-large-patch14 mkdir ..\deps\clip-vit-large-patch14
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DMG_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-echo.
-echo CLIP models will be downloaded automatically when loading.
-echo Or you can manually download from:
-echo https://github.com/openai/CLIP
-echo.
+mkdir -p "${DMG_ROOT}/deps/clip-vit-large-patch14"
 
-pause
+echo "Prepared: ${DMG_ROOT}/deps/clip-vit-large-patch14"
+echo "CLIP model files are usually downloaded automatically on first run."

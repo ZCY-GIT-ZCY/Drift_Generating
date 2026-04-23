@@ -1,120 +1,83 @@
-"""
-DMG HumanML3D Utils - WordVectorizer
-复用 MLD 的词向量器
-"""
+"""MLD-compatible WordVectorizer for HumanML3D/KIT."""
 
-import pickle
 import numpy as np
+import pickle
+from os.path import join as pjoin
 
 
-class WordVectorizer:
-    """
-    词向量器
+POS_enumerator = {
+    'VERB': 0,
+    'NOUN': 1,
+    'DET': 2,
+    'ADP': 3,
+    'NUM': 4,
+    'AUX': 5,
+    'PRON': 6,
+    'ADJ': 7,
+    'ADV': 8,
+    'Loc_VIP': 9,
+    'Body_VIP': 10,
+    'Obj_VIP': 11,
+    'Act_VIP': 12,
+    'Desc_VIP': 13,
+    'OTHER': 14,
+}
 
-    用于将文本 token 转换为词嵌入和位置 one-hot 向量
-    """
+Loc_list = ('left', 'right', 'clockwise', 'counterclockwise', 'anticlockwise', 'forward', 'back', 'backward',
+            'up', 'down', 'straight', 'curve')
 
-    def __init__(self, vec_file, w2v_file):
-        """
-        初始化词向量器
+Body_list = ('arm', 'chin', 'foot', 'feet', 'face', 'hand', 'mouth', 'leg', 'waist', 'eye', 'knee', 'shoulder', 'thigh')
 
-        Args:
-            vec_file: 词向量文件路径 (.p)
-            w2v_file: 词到向量的映射文件路径 (.p)
-        """
-        with open(vec_file, 'rb') as f:
-            self.data = pickle.load(f)
-        with open(w2v_file, 'rb') as f:
-            self.word2index = pickle.load(f)
+Obj_List = ('stair', 'dumbbell', 'chair', 'window', 'floor', 'car', 'ball', 'handrail', 'baseball', 'basketball')
 
-        self.vector_size = 300  # GloVe 词向量维度
+Act_list = ('walk', 'run', 'swing', 'pick', 'bring', 'kick', 'put', 'squat', 'throw', 'hop', 'dance', 'jump', 'turn',
+            'stumble', 'dance', 'stop', 'sit', 'lift', 'lower', 'raise', 'wash', 'stand', 'kneel', 'stroll',
+            'rub', 'bend', 'balance', 'flap', 'jog', 'shuffle', 'lean', 'rotate', 'spin', 'spread', 'climb')
+
+Desc_list = ('slowly', 'carefully', 'fast', 'careful', 'slow', 'quickly', 'happy', 'angry', 'sad', 'happily',
+             'angrily', 'sadly')
+
+VIP_dict = {
+    'Loc_VIP': Loc_list,
+    'Body_VIP': Body_list,
+    'Obj_VIP': Obj_List,
+    'Act_VIP': Act_list,
+    'Desc_VIP': Desc_list,
+}
+
+
+class WordVectorizer(object):
+    def __init__(self, meta_root, prefix):
+        vectors = np.load(pjoin(meta_root, f'{prefix}_data.npy'))
+        words = pickle.load(open(pjoin(meta_root, f'{prefix}_words.pkl'), 'rb'))
+        word2idx = pickle.load(open(pjoin(meta_root, f'{prefix}_idx.pkl'), 'rb'))
+        self.word2vec = {w: vectors[word2idx[w]] for w in words}
+
+    def _get_pos_ohot(self, pos):
+        pos_vec = np.zeros(len(POS_enumerator))
+        if pos in POS_enumerator:
+            pos_vec[POS_enumerator[pos]] = 1
+        else:
+            pos_vec[POS_enumerator['OTHER']] = 1
+        return pos_vec
 
     def __len__(self):
-        return len(self.data)
+        return len(self.word2vec)
 
-    def __call__(self, word):
-        """
-        将单词转换为词嵌入和位置 one-hot
-
-        Args:
-            word: 单词字符串
-
-        Returns:
-            word_emb: 词嵌入向量 [300]
-            pos_oh: 位置 one-hot 向量 [15]
-        """
-        # 获取词嵌入
-        word_emb = self.get_word_embedding(word)
-
-        # 获取位置 one-hot
-        pos_oh = self.get_pos_one_hot(word)
-
-        return word_emb, pos_oh
-
-    def get_word_embedding(self, word):
-        """
-        获取词嵌入
-
-        Args:
-            word: 单词字符串
-
-        Returns:
-            word_emb: 词嵌入向量
-        """
-        # 处理带词性的词（如 "walk/v" -> "walk"）
-        if '/' in word:
-            word = word.split('/')[0]
-
-        # 小写
-        word = word.lower()
-
-        # 获取向量
-        if word in self.word2index:
-            index = self.word2index[word]
-            word_emb = self.data[index]
+    def __getitem__(self, item):
+        word, pos = item.split('/')
+        if word in self.word2vec:
+            word_vec = self.word2vec[word]
+            vip_pos = None
+            for key, values in VIP_dict.items():
+                if word in values:
+                    vip_pos = key
+                    break
+            if vip_pos is not None:
+                pos_vec = self._get_pos_ohot(vip_pos)
+            else:
+                pos_vec = self._get_pos_ohot(pos)
         else:
-            # 如果词不在词汇表中，返回零向量
-            word_emb = np.zeros(self.vector_size, dtype=np.float32)
-
-        return word_emb.astype(np.float32)
-
-    def get_pos_one_hot(self, word):
-        """
-        获取位置 one-hot 向量
-
-        Args:
-            word: 单词字符串
-
-        Returns:
-            pos_oh: 位置 one-hot 向量 [15]
-        """
-        # 提取词性
-        if '/' in word:
-            pos = word.split('/')[1] if len(word.split('/')) > 1 else 'OTHER'
-        else:
-            pos = 'OTHER'
-
-        # POS 标签到索引的映射
-        pos_map = {
-            'VERB': 0,
-            'NOUN': 1,
-            'DET': 2,
-            'ADP': 3,
-            'NUM': 4,
-            'CCONJ': 5,
-            'ADV': 6,
-            'PRON': 7,
-            'AUX': 8,
-            'PART': 9,
-            'INTJ': 10,
-            'PUNCT': 11,
-            'SCONJ': 12,
-            'X': 13,
-            'OTHER': 14,
-        }
-
-        pos_oh = np.zeros(15, dtype=np.float32)
-        pos_idx = pos_map.get(pos, 14)  # 默认 OTHER
-        pos_oh[pos_idx] = 1.0
-
-        return pos_oh
+            word_vec = self.word2vec['unk']
+            pos_vec = self._get_pos_ohot('OTHER')
+        return word_vec, pos_vec

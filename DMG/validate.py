@@ -36,12 +36,13 @@ def check_mld_import():
     console.print("\n[bold cyan]检查1: 导入 MLD 模块[/bold cyan]")
 
     try:
-        # 尝试从项目根目录导入 MLD
+        # 优先检查同级目录中的 MLD（../MLD）
         project_root = Path(__file__).parent
-        mld_path = project_root / "MLD"
+        workspace_root = project_root.parent
+        mld_path = workspace_root / "MLD"
 
         if mld_path.exists():
-            sys.path.insert(0, str(project_root))
+            sys.path.insert(0, str(mld_path))
             import mld
             console.print(f"  [green]✓[/green] MLD 模块已导入: {mld.__file__}")
             return True, mld_path
@@ -225,9 +226,10 @@ def check_evaluation_pipeline(cfg, logger, results):
     console.print("\n[bold cyan]检查6: 评估管线[/bold cyan]")
 
     try:
-        # 检查 MLD 评估脚本是否存在
+        # 检查 MLD 评估脚本是否存在（同级目录 ../MLD）
         project_root = Path(__file__).parent
-        mld_test_path = project_root / "MLD" / "test.py"
+        workspace_root = project_root.parent
+        mld_test_path = workspace_root / "MLD" / "test.py"
 
         if mld_test_path.exists():
             console.print(f"  [green]✓[/green] MLD 评估脚本存在: {mld_test_path}")

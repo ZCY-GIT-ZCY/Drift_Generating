@@ -74,8 +74,14 @@ class SkipTransformerEncoder(nn.Module):
         self.output_blocks = _get_clones(encoder_layer, num_block)
         self.num_blocks = num_block + 2  # input + middle + output
 
+        d_model = getattr(encoder_layer, "d_model", None)
+        if d_model is None and hasattr(encoder_layer, "self_attn"):
+            d_model = getattr(encoder_layer.self_attn, "embed_dim", None)
+        if d_model is None:
+            raise AttributeError("Cannot infer Transformer encoder hidden size (d_model/embed_dim).")
+
         self.linear_blocks = _get_clones(
-            nn.Linear(encoder_layer.d_model * 2, encoder_layer.d_model),
+            nn.Linear(d_model * 2, d_model),
             num_block
         )
 
@@ -178,8 +184,14 @@ class SkipTransformerDecoder(nn.Module):
         self.middle_block = _get_clone(decoder_layer)
         self.output_blocks = _get_clones(decoder_layer, num_block)
 
+        d_model = getattr(decoder_layer, "d_model", None)
+        if d_model is None and hasattr(decoder_layer, "self_attn"):
+            d_model = getattr(decoder_layer.self_attn, "embed_dim", None)
+        if d_model is None:
+            raise AttributeError("Cannot infer Transformer decoder hidden size (d_model/embed_dim).")
+
         self.linear_blocks = _get_clones(
-            nn.Linear(decoder_layer.d_model * 2, decoder_layer.d_model),
+            nn.Linear(d_model * 2, d_model),
             num_block
         )
 

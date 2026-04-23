@@ -83,16 +83,16 @@ bash download_t2m_evaluators.sh
 
 **手动下载**（如自动下载失败）：
 
-1. **MLD VAE 预训练模型**
-   - 下载地址：https://drive.google.com/file/d/1G9O5arldtHvB66OPr31oE_rJG1bH_R39/view
-   - 放置位置：`DMG/pretrained_models/mld_vae_humanml3d.ckpt`
+1. **MLD HumanML3D 预训练模型（包含 VAE 权重）**
+    - 下载地址：https://drive.google.com/file/d/1hplrnQwUK_cZFHirZIOuVP0RSyZEC1YM/view
+    - 放置位置：`DMG/pretrained_models/mld_vae_humanml3d.ckpt`
 
 2. **CLIP 模型**
    - 模型会自动下载到：`DMG/deps/clip-vit-large-patch14/`
 
 3. **T2M 评估器**
-   - 从 [HumanML3D evaluators](https://github.com/EricGuo5513/HumanML3D/tree/main/evaluators) 下载
-   - 放置位置：`DMG/deps/t2m/`
+    - 下载地址：https://drive.google.com/file/d/1AYsmEG8I3fAAoraT4vau0GnesWBWyeT8/view
+    - 放置位置：`DMG/deps/t2m/`
 
 ---
 

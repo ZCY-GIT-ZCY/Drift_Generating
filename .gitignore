@@ -1,1 +1,5 @@
 .vscode/
+DMG/datasets/
+DMG/deps/t2m/
+pretrained_models/
+*.pyc
