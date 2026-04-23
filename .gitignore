@@ -3,3 +3,4 @@ DMG/datasets/
 DMG/deps/t2m/
 pretrained_models/
 *.pyc
+HumanML3D/
