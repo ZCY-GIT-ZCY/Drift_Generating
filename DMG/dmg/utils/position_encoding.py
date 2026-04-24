@@ -35,9 +35,9 @@ class PositionEmbeddingSine1D(nn.Module):
         div_term = torch.exp(
             torch.arange(0, d_model, 2) * (-math.log(temperature) / d_model)
         )
-        pe = torch.zeros(max_len, d_model)
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
 
         self.register_buffer('pe', pe)
 
@@ -52,7 +52,7 @@ class PositionEmbeddingSine1D(nn.Module):
             x: [len, B, D] 添加位置编码的张量
         """
         len_seq = x.shape[0]
-        return x + self.pe[:len_seq, :].unsqueeze(1)
+        return x + self.pe[:len_seq]
 
 
 class PositionEmbeddingLearned1D(nn.Module):

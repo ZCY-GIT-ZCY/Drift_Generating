@@ -240,13 +240,20 @@ class MotionDriftBank:
             kernel_weights_pos: [num_pos] 正样本核权重
         """
         entry = self.bank.get(class_id)
-        if entry is None:
-            raise ValueError(
-                f"[MotionDriftBank] Fatal: class {class_id} not found in bank. "
-                f"Available classes: {list(self.bank.keys())[:10]}... "
-                f"(total {self.num_classes} classes). "
-                f"Please ensure the Bank was built with all required classes."
+        if entry is None or len(entry.his_features) == 0:
+            # 某些聚类中心可能是空类（尤其 tiny/debug 或文本重复较高时）
+            # 为避免训练阶段直接崩溃，回退到样本数最多的非空类。
+            available = [cid for cid, e in self.bank.items() if len(e.his_features) > 0]
+            if len(available) == 0:
+                raise ValueError("[MotionDriftBank] Fatal: bank is empty, no class can be sampled.")
+
+            fallback_class = max(available, key=lambda cid: len(self.bank[cid].his_features))
+            print(
+                f"[MotionDriftBank] Warning: class {class_id} missing/empty, "
+                f"fallback to class {fallback_class}."
             )
+            entry = self.bank[fallback_class]
+            class_id = fallback_class
 
         N = len(entry.his_features)
 
@@ -300,7 +307,7 @@ class MotionDriftBank:
                 neg_indices = np.array(hard_indices[:num_neg])
             else:
                 # 先用所有 hard negatives，再从剩余样本中随机补充
-                neg_indices = np.array(hard_indices)
+                neg_indices = np.array(hard_indices, dtype=np.int64)
                 remaining_neg_needed = num_neg - len(hard_indices)
                 if remaining_neg_needed > 0:
                     remaining_pool = np.array([
@@ -310,16 +317,32 @@ class MotionDriftBank:
                     if len(remaining_pool) >= remaining_neg_needed:
                         extra_indices = np.random.choice(remaining_pool, remaining_neg_needed, replace=False)
                     else:
-                        # 样本不足，全部用上，再从全部样本中随机补（允许重复）
+                        # 样本不足：从可用池随机补（允许重复）
+                        # 若可用池为空（例如该类极小且正样本覆盖全部样本），回退到全量池。
+                        fallback_pool = np.array([i for i in range(len(all_his)) if i not in exclude])
+                        if len(fallback_pool) == 0:
+                            fallback_pool = np.arange(len(all_his))
                         extra_indices = np.random.choice(
-                            np.array([i for i in range(len(all_his)) if i not in exclude]),
+                            fallback_pool,
                             remaining_neg_needed,
-                            replace=True
+                            replace=True,
                         )
                     neg_indices = np.concatenate([neg_indices, extra_indices])
+
+            # 兜底：确保返回固定 num_neg 个负样本
+            if len(neg_indices) < num_neg:
+                pad_pool = np.arange(len(all_his))
+                pad = np.random.choice(pad_pool, num_neg - len(neg_indices), replace=True)
+                neg_indices = np.concatenate([neg_indices, pad])
+            elif len(neg_indices) > num_neg:
+                neg_indices = neg_indices[:num_neg]
+            neg_indices = neg_indices.astype(np.int64, copy=False)
         else:
             # 随机采样
-            neg_indices = np.random.choice(N, min(num_neg, N), replace=False)
+            if N >= num_neg:
+                neg_indices = np.random.choice(N, num_neg, replace=False)
+            else:
+                neg_indices = np.random.choice(N, num_neg, replace=True)
 
         future_neg = entry.future_latents[neg_indices]
 
@@ -454,6 +477,11 @@ class BankBuilder:
         all_his = []
         all_future = []
 
+        def _to_float_tensor(x):
+            if isinstance(x, torch.Tensor):
+                return x.float()
+            return torch.from_numpy(x).float()
+
         for batch in tqdm(dataloader, desc="VAE encoding"):
             # DataLoader 返回两种格式：
             # 1. 无 collate_fn：batch 是列表，每个元素是 (his, future, caption, source) 元组
@@ -475,8 +503,8 @@ class BankBuilder:
                 future_list = [future_batch[i] for i in range(future_batch.shape[0])]
 
             # 合并为批次张量（his/future 都是固定长度）
-            his_tensor = torch.stack([torch.from_numpy(h).float() for h in his_list])
-            future_tensor = torch.stack([torch.from_numpy(f).float() for f in future_list])
+            his_tensor = torch.stack([_to_float_tensor(h) for h in his_list])
+            future_tensor = torch.stack([_to_float_tensor(f) for f in future_list])
 
             his_batch = his_tensor.to(self.device)
             future_batch = future_tensor.to(self.device)
@@ -505,6 +533,7 @@ class BankBuilder:
         future_len: int = 25,
         latent_dim: int = 256,
         batch_size: int = 64,
+        clip_batch_size: int = 256,
         num_workers: int = 8,
         save_path: Optional[str] = None,
     ) -> MotionDriftBank:
@@ -519,6 +548,7 @@ class BankBuilder:
             future_len: 未来帧长度
             latent_dim: latent 维度
             batch_size: VAE 编码批次大小
+            clip_batch_size: CLIP 编码批次大小
             num_workers: DataLoader worker 数
             save_path: 保存路径（可选）
 
@@ -532,7 +562,7 @@ class BankBuilder:
         # Step 1: CLIP 文本编码
         print("\n[BankBuilder] Step 1/4: CLIP text encoding...")
         texts = dataset.get_all_texts()
-        text_embeddings = self.encode_texts_batch(texts, batch_size=256)
+        text_embeddings = self.encode_texts_batch(texts, batch_size=clip_batch_size)
         print(f"  Text embeddings shape: {text_embeddings.shape}")
 
         # Step 2: K-means 聚类
@@ -551,12 +581,13 @@ class BankBuilder:
 
         # Step 3: VAE latent 提取
         print("\n[BankBuilder] Step 3/4: VAE latent encoding...")
+        from dmg.data.sliding_window import collate_sliding_window
         window_loader = DataLoader(
             dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
-            # SlidingWindowDataset 的每个窗口 his/future 都是固定长度，无需自定义 collate
+            collate_fn=collate_sliding_window,
         )
         his_features, future_latents = self.encode_motions_vae(
             window_loader, latent_dim=latent_dim

@@ -32,14 +32,7 @@ class HumanML3DDataModule(BASEDataModule):
             num_workers=num_workers,
             collate_fn=collate_fn
         )
-        # 注意：LightningDataModule 没有 save_hyperparameters 方法，与 LightningModule 不同
-        # 直接存储 hparams 到实例属性
-        self.hparams = {
-            'batch_size': batch_size,
-            'num_workers': num_workers,
-            'collate_fn': collate_fn,
-            'phase': phase,
-        }
+        self.save_hyperparameters(logger=False)
         self.phase = phase
         self.name = "humanml3d"
         self.njoints = 22

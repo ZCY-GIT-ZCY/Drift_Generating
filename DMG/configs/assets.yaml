@@ -44,7 +44,7 @@ DATASET:
 ####################################
 model:
   # CLIP 文本编码器
-  clip_path: './deps/clip-vit-large-patch14'
+  clip_path: './deps/clip/ViT-B-32.pt'
   # BERT 文本编码器
   bert_path: './deps/distilbert-base-uncased'
   # T2M 评估器

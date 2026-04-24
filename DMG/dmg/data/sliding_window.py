@@ -352,10 +352,11 @@ class SlidingWindowDataModule(pl.LightningDataModule):
         self.text_dir = pjoin(self.data_root, "texts")
         self.split_file = pjoin(dataset_cfg.SPLIT_ROOT, f"{split}.txt")
 
-        # 滑动窗口参数（从配置读取或使用默认值）
-        self.his_len = cfg.WINDOW.HIS_LEN
-        self.future_len = cfg.WINDOW.FUTURE_LEN
-        self.stride = cfg.WINDOW.STRIDE
+        # 滑动窗口参数（兼容大写/小写键名）
+        window_cfg = cfg.WINDOW
+        self.his_len = window_cfg.get('HIS_LEN', window_cfg.get('his_len', 20))
+        self.future_len = window_cfg.get('FUTURE_LEN', window_cfg.get('future_len', 25))
+        self.stride = window_cfg.get('STRIDE', window_cfg.get('stride', 5))
 
         # 归一化参数
         from .get_data import get_global_mean_std

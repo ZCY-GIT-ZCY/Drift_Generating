@@ -1,0 +1,111 @@
+NAME: dmg_smoke_mini_bank
+DEBUG: false
+ACCELERATOR: gpu
+DEVICE:
+- 0
+SEED_VALUE: 1234
+TRAIN:
+  STAGE: drift
+  DATASETS:
+  - humanml3d
+  NUM_WORKERS: 0
+  BATCH_SIZE: 64
+  END_EPOCH: 1
+  RESUME: ''
+  PRETRAINED_VAE: ./pretrained_models/mld_vae_humanml3d.ckpt
+  OPTIM:
+    TYPE: AdamW
+    LR: 0.0002
+    WEIGHT_DECAY: 0.01
+    SCHEDULER:
+      enabled: true
+  EMA: true
+  EMA_DECAY: 0.999
+  GRAD_CLIP: 1.0
+EVAL:
+  DATASETS:
+  - humanml3d
+  BATCH_SIZE: 32
+  SPLIT: test
+TEST:
+  CHECKPOINTS: ./experiments/dmg_humanml3d_baseline/checkpoints/latest.ckpt
+  DATASETS:
+  - humanml3d
+  SPLIT: test
+  BATCH_SIZE: 1
+  NUM_WORKERS: 8
+  REPLICATION_TIMES: 20
+DATASET:
+  JOINT_TYPE: humanml3d
+  NFEATS: 263
+  NJOINTS: 22
+  SAMPLER:
+    MAX_LEN: 196
+    MIN_LEN: 40
+    MAX_TEXT_LEN: 20
+  HUMANML3D:
+    PICK_ONE_TEXT: true
+    FRAME_RATE: 20.0
+    UNIT_LEN: 4
+model:
+  target: modules
+  model_type: dmg
+  condition: text
+  latent_dim:
+  - 1
+  - 256
+  ff_size: 1024
+  num_layers: 9
+  num_heads: 4
+  dropout: 0.1
+  activation: gelu
+  generator:
+    hidden_size: 768
+    depth: 12
+    num_heads: 12
+    use_qknorm: true
+    use_rmsnorm: true
+    use_rope: true
+    use_swiglu: true
+    cond_dim: 768
+DRIFT_LOSS:
+  R_list:
+  - 0.1
+  - 0.5
+  - 1.0
+  pos_per_sample: 16
+  neg_per_sample: 32
+  kernel_sigma: 0.1
+  hard_neg: true
+BANK:
+  num_text_classes: 512
+  max_size_per_class: 64
+  bank_path: ./data/motion_drift_bank_tiny_check.pkl
+WINDOW:
+  his_len: 20
+  future_len: 25
+  stride: 5
+  max_total_len: 45
+CFG:
+  cfg_min: 1.0
+  cfg_max: 2.0
+  no_cfg_frac: 0.1
+METRIC:
+  TYPE:
+  - TemosMetric
+  - TM2TMetrics
+  FORCE_IN_METER: true
+LOSS:
+  TYPE: dmg
+  LAMBDA_DRIFT: 1.0
+  LAMBDA_MSE: 0.0
+LOGGER:
+  SACE_CHECKPOINT_EPOCH: 1
+  LOG_EVERY_STEPS: 10
+  VAL_EVERY_STEPS: 200
+  TENSORBOARD: false
+  WANDB:
+    PROJECT: null
+    OFFLINE: false
+    RESUME_ID: null
+  FOLDER_EXP: ./experiments

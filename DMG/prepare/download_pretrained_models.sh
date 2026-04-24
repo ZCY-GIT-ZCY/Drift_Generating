@@ -16,9 +16,10 @@ echo "1) MLD HumanML3D checkpoint (contains VAE weights)"
 echo "   URL : https://drive.google.com/file/d/1hplrnQwUK_cZFHirZIOuVP0RSyZEC1YM/view"
 echo "   Dest: ${DMG_ROOT}/pretrained_models/mld_vae_humanml3d.ckpt"
 echo
-echo "2) CLIP model cache directory"
-echo "   Dest: ${DMG_ROOT}/deps/clip-vit-large-patch14"
-echo "   Note: also auto-downloaded on first run if internet is available."
+echo "2) CLIP ViT-B/32 weights"
+echo "   URL : https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/pytorch_model.bin"
+echo "   Dest: ${DMG_ROOT}/deps/clip/ViT-B-32.pt"
+echo "   Note: download and rename pytorch_model.bin -> ViT-B-32.pt"
 echo
 echo "3) T2M evaluators"
 echo "   URL : https://drive.google.com/file/d/1AYsmEG8I3fAAoraT4vau0GnesWBWyeT8/view"

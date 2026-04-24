@@ -118,7 +118,12 @@ def check_feature_processing(batch):
             console.print(f"  [yellow]⚠[/yellow] 特征可能未归一化: mean={motion.mean():.4f}, std={motion.std():.4f}")
 
         # 检查 NaN
-        if not np.any(np.isnan(motion)):
+        if isinstance(motion, torch.Tensor):
+            has_nan = torch.isnan(motion).any().item()
+        else:
+            has_nan = np.isnan(motion).any()
+
+        if not has_nan:
             console.print(f"  [green]✓[/green] 无 NaN 值")
         else:
             console.print(f"  [red]✗[/red] 存在 NaN 值")
@@ -160,8 +165,11 @@ def check_vae_loading(cfg, logger):
         # 尝试加载预训练权重
         vae_ckpt = cfg.TRAIN.PRETRAINED_VAE if hasattr(cfg.TRAIN, 'PRETRAINED_VAE') else None
         if vae_ckpt and os.path.exists(vae_ckpt):
-            vae.load_pretrained(vae_ckpt)
-            console.print(f"  [green]✓[/green] 预训练权重加载成功: {vae_ckpt}")
+            loaded = vae.load_pretrained(vae_ckpt)
+            if loaded:
+                console.print(f"  [green]✓[/green] 预训练权重加载成功: {vae_ckpt}")
+            else:
+                console.print(f"  [yellow]⚠[/yellow] 预训练权重存在但未成功加载: {vae_ckpt}")
         else:
             console.print(f"  [yellow]⚠[/yellow] 预训练权重未指定或不存在")
 
@@ -197,7 +205,7 @@ def check_clip_loading(cfg, logger):
         from dmg.models.architectures.mld_clip import MldTextEncoder
 
         # 从配置获取 CLIP 路径（与原版 MLD 保持一致）
-        clip_path = cfg.model.clip_path if hasattr(cfg.model, 'clip_path') else "./deps/clip-vit-large-patch14"
+        clip_path = cfg.model.clip_path if hasattr(cfg.model, 'clip_path') else "./deps/clip/ViT-B-32.pt"
 
         # 创建 CLIP 编码器
         clip_encoder = MldTextEncoder(modelpath=clip_path)

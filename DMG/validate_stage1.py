@@ -76,6 +76,9 @@ def test_vae():
         arch='all_encoder',
     )
     vae.eval()
+    # 与训练阶段保持一致：VAE 作为冻结编码器使用
+    for p in vae.parameters():
+        p.requires_grad = False
     print_ok(f"VAE 模型创建成功 (参数: {sum(p.numel() for p in vae.parameters()):,})")
 
     # 1.2 测试 encode 输出形状
@@ -122,7 +125,7 @@ def test_vae():
         m = create_random_motion(2, Ti)
         with torch.no_grad():
             z, _ = vae.encode(m, lengths=[Ti] * 2)
-            r, _ = vae.decode(z, lengths=[Ti] * 2)
+            r = vae.decode(z, lengths=[Ti] * 2)
         assert z.shape == (2, 1, 256)
         assert r.shape == (2, Ti, 263)
         print_info(f"  T={Ti:2d}: encode {tuple(z.shape)} → decode {tuple(r.shape)} ✓")
@@ -158,7 +161,7 @@ def test_clip():
     # 2.1 创建模型
     console.print("\n[2.1] 初始化 CLIP 文本编码器...")
     clip_encoder = MldTextEncoder(
-        modelpath="./deps/clip-vit-large-patch14",
+        modelpath="./deps/clip/ViT-B-32.pt",
         precision='fp32',
     )
     print_ok("CLIP 模型创建成功")
@@ -232,7 +235,7 @@ def test_joint(vae, clip_encoder):
         latent, _ = vae.encode(motion, lengths=[T] * B)  # [B, 1, 256]
         # 模拟条件构建：latent mean+std → Dense(768)
         latent_mean = latent.mean(dim=1, keepdim=True)  # [B, 1, 256]
-        latent_std = latent.std(dim=1, keepdim=True) + 1e-6  # [B, 1, 256]
+        latent_std = latent.std(dim=1, keepdim=True, unbiased=False) + 1e-6  # [B, 1, 256]
         his_cond_raw = torch.cat([latent_mean, latent_std], dim=-1)  # [B, 1, 512]
         his_cond = torch.nn.Linear(512, cond_dim)(his_cond_raw)  # [B, 768]
     print_ok(f"Motion latent: {tuple(latent.shape)}")
@@ -243,7 +246,7 @@ def test_joint(vae, clip_encoder):
     motion_raw = create_random_motion(2, 25)
     with torch.no_grad():
         z, _ = vae.encode(motion_raw, lengths=[25, 25])
-        recon, _ = vae.decode(z, lengths=[25, 25])
+        recon = vae.decode(z, lengths=[25, 25])
         mse = torch.mean((recon - motion_raw) ** 2).item()
     print_info(f"端到端 MSE: {mse:.6f}")
     print_ok(f"VAE encode → decode 管道正常工作")

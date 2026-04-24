@@ -127,13 +127,18 @@ def load_clip(cfg: dict, device: str) -> torch.nn.Module:
     return clip_encoder
 
 
-def build_dataset(cfg: dict, split_file: str, mean: np.ndarray, std: np.ndarray):
+def build_dataset(
+    cfg: dict,
+    motion_dir: str,
+    text_dir: str,
+    split_file: str,
+    mean: np.ndarray,
+    std: np.ndarray,
+):
     """构建滑动窗口数据集"""
     console.print("\n[cyan]Building sliding window dataset...[/cyan]")
 
     bank_cfg = cfg['bank']
-    motion_dir = cfg['dataset']['motion_dir']
-    text_dir = cfg['dataset']['text_dir']
 
     dataset = SlidingWindowDataset(
         motion_dir=motion_dir,
@@ -284,7 +289,7 @@ def main():
     clip_encoder = load_clip(cfg, device)
 
     # 构建滑动窗口数据集
-    dataset = build_dataset(cfg, split_file_cfg, mean, std)
+    dataset = build_dataset(cfg, motion_dir, text_dir, split_file_cfg, mean, std)
 
     if len(dataset) == 0:
         console.print("[red]Error: No windows generated. Check dataset paths.[/red]")
@@ -315,6 +320,7 @@ def main():
         future_len=bank_cfg['future_len'],
         latent_dim=cfg['vae']['latent_dim'][1],  # [token, dim] → 取 dim 部分
         batch_size=bank_cfg.get('batch_size', 64),
+        clip_batch_size=cfg.get('clip', {}).get('batch_size', 256),
         num_workers=cfg['process']['num_workers'],
         save_path=output_path,
     )

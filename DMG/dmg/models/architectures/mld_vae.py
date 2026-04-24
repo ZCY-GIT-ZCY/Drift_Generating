@@ -65,7 +65,7 @@ class MldVae(nn.Module):
             dim_feedforward=ff_size,
             dropout=dropout,
             activation=activation_fn,
-            batch_first=True
+            batch_first=False
         )
         self.encoder = SkipTransformerEncoder(
             encoder_layer,
@@ -81,7 +81,7 @@ class MldVae(nn.Module):
                 dim_feedforward=ff_size,
                 dropout=dropout,
                 activation=activation_fn,
-                batch_first=True
+                batch_first=False
             )
             self.decoder = SkipTransformerEncoder(
                 decoder_layer,
@@ -95,7 +95,7 @@ class MldVae(nn.Module):
                 dim_feedforward=ff_size,
                 dropout=dropout,
                 activation=activation_fn,
-                batch_first=True
+                batch_first=False
             )
             self.decoder = SkipTransformerDecoder(
                 decoder_layer,
@@ -149,6 +149,7 @@ class MldVae(nn.Module):
         x = x.permute(1, 0, 2)  # [T, B, D]
 
         # 拼接 Motion Token
+        token_count = self.global_motion_token.shape[0]
         dist = torch.tile(
             self.global_motion_token[:, None, :],
             (1, bs, 1)
@@ -166,9 +167,12 @@ class MldVae(nn.Module):
             for i, length in enumerate(lengths):
                 if length < max_len:
                     mask[i, length:] = True
-            aug_mask = torch.cat([torch.zeros(bs, self.latent_size, device=features.device, dtype=torch.bool), mask], dim=1)
+            aug_mask = torch.cat([
+                torch.zeros(bs, token_count, device=features.device, dtype=torch.bool),
+                mask,
+            ], dim=1)
 
-        dist = self.encoder(xseq, src_key_padding_mask=aug_mask)[:self.latent_size]
+        dist = self.encoder(xseq, src_key_padding_mask=aug_mask)[:token_count]
 
         # 分布预测
         if self.mlp_dist:
@@ -181,8 +185,13 @@ class MldVae(nn.Module):
 
         # 重参数化采样
         import torch.distributions as distributions
-        distribution = distributions.Normal(mu, logvar.exp().pow(0.5))
-        latent = distribution.rsample()
+        std = logvar.exp().pow(0.5)
+        distribution = distributions.Normal(mu, std)
+        latent = distribution.rsample()  # [N, B, D]
+
+        # 对外统一接口: [B, N, D]
+        latent = latent.permute(1, 0, 2)
+        distribution = distributions.Normal(mu.permute(1, 0, 2), std.permute(1, 0, 2))
 
         return latent, distribution
 
@@ -209,8 +218,11 @@ class MldVae(nn.Module):
         # 生成查询
         queries = torch.zeros(nframes, bs, self.latent_dim[1], device=z.device)
 
+        # 对外接口 z: [B, N, D]，内部 Transformer 使用 [N, B, D]
+        z_seq = z.permute(1, 0, 2)
+
         # 拼接 latent 和查询
-        xseq = torch.cat((z, queries), axis=0)  # [N+T, B, D]
+        xseq = torch.cat((z_seq, queries), axis=0)  # [N+T, B, D]
 
         # Transformer 解码
         augmask = torch.zeros(bs, self.latent_size + nframes, device=z.device, dtype=torch.bool)
@@ -221,7 +233,7 @@ class MldVae(nn.Module):
 
         # 输出投影
         output = self.final_layer(output)
-        output[mask.T] = 0  # 填充置零
+        output[~mask.T] = 0  # 填充置零
 
         return output.permute(1, 0, 2)  # [B, T, D]
 

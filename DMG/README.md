@@ -88,7 +88,9 @@ bash download_t2m_evaluators.sh
     - 放置位置：`DMG/pretrained_models/mld_vae_humanml3d.ckpt`
 
 2. **CLIP 模型**
-   - 模型会自动下载到：`DMG/deps/clip-vit-large-patch14/`
+    - 下载地址：https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/pytorch_model.bin
+    - 放置位置：`DMG/deps/clip/ViT-B-32.pt`
+    - 注意：将下载文件 `pytorch_model.bin` 重命名为 `ViT-B-32.pt`
 
 3. **T2M 评估器**
     - 下载地址：https://drive.google.com/file/d/1AYsmEG8I3fAAoraT4vau0GnesWBWyeT8/view
@@ -293,7 +295,8 @@ DMG/
 ├── datasets/              # 数据集（需单独下载）
 │   └── humanml3d/
 ├── deps/                  # 依赖模型
-│   ├── clip-vit-large-patch14/
+│   ├── clip/
+│   │   └── ViT-B-32.pt
 │   ├── smpl/
 │   ├── transforms/
 │   ├── glove/

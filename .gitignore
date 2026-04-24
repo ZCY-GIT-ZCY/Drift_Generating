@@ -1,6 +1,7 @@
 .vscode/
 DMG/datasets/
-DMG/deps/t2m/
+DMG/deps/
 pretrained_models/
 *.pyc
 HumanML3D/
+DMG/data/

@@ -39,14 +39,14 @@ dataset:
 
 # ---------- CLIP 编码器参数 ----------
 clip:
-  model_path: "./deps/clip-vit-large-patch14"
+  model_path: "./deps/clip/ViT-B-32.pt"
   batch_size: 256       # CLIP 编码批次大小
   device: "cuda"        # cuda / cpu
 
 # ---------- VAE 编码器参数 ----------
 vae:
   latent_dim: [1, 256]  # [token数, 通道数]，与 pipeline §3.1 一致
-  pretrained_path: ""   # 预训练权重路径（可选，用于加载 MLD 预训练 VAE）
+  pretrained_path: "./pretrained_models/mld_vae_humanml3d.ckpt"   # 预训练权重路径（推荐）
 
 # ---------- 处理控制 ----------
 process:

@@ -263,7 +263,7 @@ def test_full_pipeline():
     print_header("测试 7: VAE + DitGenMotion 完整前向（pipeline §5.2 步骤 ①②）")
 
     # VAE
-    vae = MldVae(nfeats=263, latent_dim=[1, 256], num_layers=4, arch='all_encoder')
+    vae = MldVae(nfeats=263, latent_dim=[1, 256], num_layers=5, arch='all_encoder')
     vae.eval()
     for p in vae.parameters():
         p.requires_grad = False

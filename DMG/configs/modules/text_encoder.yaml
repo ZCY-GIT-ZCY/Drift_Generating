@@ -2,5 +2,5 @@
 text_encoder:
   target: dmg.models.architectures.mld_clip.MldTextEncoder
   params:
-    modelpath: ./deps/clip-vit-large-patch14
+    modelpath: ./deps/clip/ViT-B-32.pt
     precision: 32

@@ -20,7 +20,7 @@ class MldTextEncoder(nn.Module):
 
     def __init__(
         self,
-        modelpath: str = "./deps/clip-vit-large-patch14",
+        modelpath: str = "./deps/clip/ViT-B-32.pt",
         precision: str = "fp32",
         **kwargs
     ):
@@ -43,7 +43,7 @@ class MldTextEncoder(nn.Module):
         self._load_clip()
 
         # 文本嵌入维度
-        self.text_dim = 512  # CLIP ViT-B/32 或 ViT-L/14
+        self.text_dim = 512  # CLIP ViT-B/32
 
     def _load_clip(self):
         """加载 CLIP 模型"""

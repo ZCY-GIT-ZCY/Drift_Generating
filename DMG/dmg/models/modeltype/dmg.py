@@ -30,8 +30,8 @@ from typing import Dict, List, Optional, Tuple
 from ..architectures.mld_vae import MldVae
 from ..architectures.mld_clip import MldTextEncoder
 from ..architectures.dit_gen_motion import DitGenMotion, apply_cfg
-from ..data.bank import MotionDriftBank
-from .losses.drift_loss_bridge import compute_drift_loss_and_gradients
+from ...data.bank import MotionDriftBank
+from ..losses.drift_loss_bridge import compute_drift_loss_and_gradients
 
 
 class DMG(pl.LightningModule):
@@ -42,9 +42,10 @@ class DMG(pl.LightningModule):
     从而精确控制 PyTorch 梯度和 JAX drift_loss 梯度的合并时机。
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, datamodule=None):
         super().__init__()
         self.cfg = cfg
+        self.datamodule = datamodule
 
         # ========== 阶段1：冻结编码器 ==========
         vae_cfg = cfg.get('vae', {})
@@ -64,7 +65,7 @@ class DMG(pl.LightningModule):
         self._freeze_vae()
 
         self.clip = MldTextEncoder(
-            modelpath=clip_cfg.get('model_path', './deps/clip-vit-large-patch14'),
+            modelpath=clip_cfg.get('model_path', './deps/clip/ViT-B-32.pt'),
             precision=clip_cfg.get('precision', 'fp32'),
         )
         self._freeze_clip()

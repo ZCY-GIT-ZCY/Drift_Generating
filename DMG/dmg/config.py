@@ -95,7 +95,7 @@ def parse_args(phase="train"):
         )
         group.add_argument("--batch_size", type=int, required=False, help="training batch size")
         group.add_argument("--device", type=int, nargs="+", required=False, help="training device")
-        group.add_argument("--nodebug", action="store_true", required=False, help="debug or not")
+        group.add_argument("--nodebug", action="store_true", default=None, required=False, help="debug or not")
 
     if phase == "demo":
         group.add_argument("--render", action="store_true", help="render visualized figures")
@@ -126,7 +126,7 @@ def parse_args(phase="train"):
             cfg.vae = OmegaConf.create({'pretrained_path': modules.motion_vae.get('pretrained_path', '')})
         if hasattr(modules, 'text_encoder'):
             cfg.clip = OmegaConf.create({
-                'model_path': modules.text_encoder.get('modelpath', './deps/clip-vit-large-patch14'),
+                'model_path': modules.text_encoder.get('modelpath', './deps/clip/ViT-B-32.pt'),
                 'precision': modules.text_encoder.get('precision', 'fp32'),
             })
         # generator.yaml 的格式是 generator: {target, params}，

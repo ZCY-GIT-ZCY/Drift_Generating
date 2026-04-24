@@ -113,7 +113,7 @@ def main():
     if len(cfg.DEVICE) > 1:
         ddp_strategy = "ddp"
     else:
-        ddp_strategy = None
+        ddp_strategy = "auto"
 
     # 训练器
     trainer = pl.Trainer(

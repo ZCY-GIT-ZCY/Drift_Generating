@@ -626,13 +626,18 @@ class DitGenMotion(nn.Module):
         """
         # text_cond
         if cfg_drop:
-            text_cond = torch.zeros_like(text_emb)
+            text_cond = torch.zeros(
+                text_emb.shape[0],
+                self.cond_dim,
+                device=text_emb.device,
+                dtype=text_emb.dtype,
+            )
         else:
             text_cond = self.text_proj(text_emb)
 
         # his_cond: mean + std over sequence dimension
         z_h_mean = z_h.mean(dim=1)          # [B, latent_dim]
-        z_h_std = z_h.std(dim=1) + 1e-6    # [B, latent_dim]
+        z_h_std = z_h.std(dim=1, unbiased=False) + 1e-6    # [B, latent_dim]
         his_cond = self.his_proj(torch.cat([z_h_mean, z_h_std], dim=-1))  # [B, cond_dim]
 
         # cfg_emb（对应 generator.py DitGen.c_cfg_noise_to_cond）
